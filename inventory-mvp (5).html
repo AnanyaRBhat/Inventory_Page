@@ -1,0 +1,3904 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OfficeStock — Inventory Management</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --transition-theme: background 0.25s, color 0.25s, border-color 0.25s;
+      }
+      [data-theme="dark"] {
+        --bg: #0d0f14;
+        --surface: #161923;
+        --surface2: #1e2330;
+        --surface3: #252c3d;
+        --border: #2e3650;
+        --accent: #4f8ef7;
+        --accent2: #7c5cfc;
+        --green: #22c55e;
+        --yellow: #f59e0b;
+        --red: #ef4444;
+        --text: #e8eaf2;
+        --text2: #8892b0;
+        --text3: #4e5a78;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        --img-bg: #1a1f2e;
+        --badge-red: #2d1515;
+        --badge-yellow: #2d2010;
+        --badge-green: #102d15;
+        --badge-blue: #10182d;
+        --stock-ok: #102d15;
+        --stock-low: #2d2010;
+        --stock-out: #2d1515;
+        --low-row: #1c1200;
+        --out-row: #1c0808;
+        --login-grad: radial-gradient(
+          ellipse 80% 60% at 50% -10%,
+          #1a2240 0%,
+          #0d0f14 70%
+        );
+      }
+      [data-theme="light"] {
+        --bg: #f0f2f7;
+        --surface: #ffffff;
+        --surface2: #f5f6fa;
+        --surface3: #eaecf4;
+        --border: #dde1ee;
+        --accent: #2563eb;
+        --accent2: #7c3aed;
+        --green: #16a34a;
+        --yellow: #d97706;
+        --red: #dc2626;
+        --text: #111827;
+        --text2: #4b5563;
+        --text3: #9ca3af;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --img-bg: #eef0f8;
+        --badge-red: #fee2e2;
+        --badge-yellow: #fef3c7;
+        --badge-green: #dcfce7;
+        --badge-blue: #dbeafe;
+        --stock-ok: #dcfce7;
+        --stock-low: #fef3c7;
+        --stock-out: #fee2e2;
+        --low-row: #fffbeb;
+        --out-row: #fff1f2;
+        --login-grad: radial-gradient(
+          ellipse 80% 60% at 50% -10%,
+          #dbeafe 0%,
+          #f0f2f7 70%
+        );
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Times New Roman", Times, serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+        transition: var(--transition-theme);
+      }
+
+      /* THEME PILL */
+      .theme-toggle-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.15s;
+        user-select: none;
+      }
+      .theme-toggle-pill:hover {
+        background: var(--surface2);
+      }
+      .pill-label {
+        font-size: 12px;
+        color: var(--text2);
+        flex: 1;
+      }
+      .pill-track {
+        width: 40px;
+        height: 22px;
+        border-radius: 11px;
+        background: var(--surface3);
+        border: 1px solid var(--border);
+        position: relative;
+        transition:
+          background 0.25s,
+          border-color 0.25s;
+        flex-shrink: 0;
+      }
+      .pill-track.on {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .pill-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.25s;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+      }
+      .pill-track.on .pill-thumb {
+        transform: translateX(18px);
+      }
+      .login-theme-link {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        background: none;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        font-size: 12px;
+        font-family: "Times New Roman", Times, serif;
+        color: var(--text2);
+        padding: 4px 12px;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+      .login-theme-link:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* SCREENS */
+      .screen {
+        display: none;
+        min-height: 100vh;
+      }
+      .screen.active {
+        display: flex;
+      }
+
+      /* LOGIN */
+      #screen-login {
+        align-items: center;
+        justify-content: center;
+        background: var(--login-grad);
+      }
+      .login-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 48px 44px 40px;
+        width: 420px;
+        position: relative;
+        box-shadow: var(--shadow);
+      }
+      .login-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 10px 10px 0 0;
+        background: linear-gradient(90deg, var(--accent2), var(--accent));
+      }
+      .login-logo {
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 32px;
+        font-weight: 700;
+      }
+      .login-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .login-sub {
+        color: var(--text2);
+        font-size: 14px;
+        margin-bottom: 32px;
+      }
+      .field-label {
+        font-size: 11px;
+        color: var(--text2);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        display: block;
+        font-weight: 700;
+      }
+      .field-wrap {
+        margin-bottom: 20px;
+      }
+      .field-input {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 11px 14px;
+        color: var(--text);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 14px;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          background 0.25s;
+      }
+      .field-input:focus {
+        border-color: var(--accent);
+      }
+      .role-select-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+      .role-btn {
+        flex: 1;
+        padding: 9px 6px;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-family: "Times New Roman", Times, serif;
+        color: var(--text2);
+        transition: all 0.2s;
+        text-align: center;
+        font-weight: 700;
+      }
+      .role-btn.active {
+        border-color: var(--accent);
+        background: var(--badge-blue);
+        color: var(--accent);
+      }
+      .btn-primary {
+        width: 100%;
+        padding: 13px;
+        background: var(--accent);
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      .btn-primary:hover {
+        opacity: 0.85;
+      }
+      .login-hint {
+        margin-top: 16px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--text3);
+      }
+
+      /* APP SHELL */
+      #screen-app {
+        flex-direction: row;
+      }
+      .sidebar {
+        width: 232px;
+        min-height: 100vh;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        transition: var(--transition-theme);
+      }
+      .sidebar-top {
+        padding: 18px 16px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar-logo {
+        font-size: 9px;
+        color: var(--accent);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+        font-weight: 700;
+      }
+      .sidebar-appname {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .sidebar-nav {
+        padding: 10px;
+        flex: 1;
+        overflow-y: auto;
+      }
+      .nav-section {
+        font-size: 9px;
+        color: var(--text3);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 12px 8px 5px;
+        font-weight: 700;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--text2);
+        transition: all 0.15s;
+        margin-bottom: 2px;
+      }
+      .nav-item:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: var(--badge-blue);
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .nav-icon {
+        width: 22px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text3);
+        flex-shrink: 0;
+      }
+      .sidebar-user {
+        padding: 12px 14px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent2), var(--accent));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+        color: #fff;
+      }
+      .user-name {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .user-role {
+        font-size: 10px;
+        color: var(--accent);
+        letter-spacing: 1px;
+      }
+      .logout-btn {
+        margin-left: auto;
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text2);
+        cursor: pointer;
+        font-size: 11px;
+        font-family: "Times New Roman", Times, serif;
+        padding: 3px 8px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        font-weight: 700;
+      }
+      .logout-btn:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .main-area {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 100vh;
+      }
+      .page {
+        display: none;
+        padding: 28px 30px;
+      }
+      .page.active {
+        display: block;
+      }
+      .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+      .page-title {
+        font-size: 21px;
+        font-weight: 700;
+      }
+      .page-sub {
+        color: var(--text2);
+        font-size: 13px;
+        margin-top: 3px;
+      }
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--text3);
+        margin-bottom: 5px;
+        letter-spacing: 0.5px;
+      }
+      .breadcrumb span {
+        color: var(--text2);
+      }
+
+      /* PRODUCT CARDS */
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 14px;
+        margin-bottom: 28px;
+      }
+      .product-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        transition:
+          box-shadow 0.2s,
+          transform 0.2s;
+        cursor: pointer;
+      }
+      .product-card:hover {
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
+      }
+      .product-card.low-border {
+        border-color: var(--yellow);
+      }
+      .product-card.out-border {
+        border-color: var(--red);
+      }
+      .product-img-wrap {
+        background: var(--img-bg);
+        height: 136px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .product-img-wrap img {
+        max-width: 88%;
+        max-height: 108px;
+        object-fit: contain;
+        filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.22));
+        transition: transform 0.3s;
+      }
+      .product-card:hover .product-img-wrap img {
+        transform: scale(1.06);
+      }
+      .prod-stock-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .product-info {
+        padding: 12px 14px;
+      }
+      .product-name {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .product-brand {
+        font-size: 10px;
+        color: var(--text2);
+        margin-bottom: 10px;
+        letter-spacing: 0.5px;
+      }
+      .product-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .product-stock-num {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .product-order-btn {
+        padding: 5px 11px;
+        border-radius: 5px;
+        font-size: 11px;
+        font-family: "Times New Roman", Times, serif;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.2s;
+        font-weight: 700;
+      }
+
+      /* STATS */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px 18px;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition-theme);
+      }
+      .stat-card::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 0 0 8px 8px;
+        background: var(--accent-bar, var(--accent));
+      }
+      .stat-label {
+        font-size: 10px;
+        color: var(--text2);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 9px;
+        font-weight: 700;
+      }
+      .stat-val {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .stat-meta {
+        font-size: 11px;
+        color: var(--text2);
+        margin-top: 6px;
+      }
+      .stat-badge {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .badge-red {
+        background: var(--badge-red);
+        color: var(--red);
+      }
+      .badge-yellow {
+        background: var(--badge-yellow);
+        color: var(--yellow);
+      }
+      .badge-green {
+        background: var(--badge-green);
+        color: var(--green);
+      }
+      .badge-blue {
+        background: var(--badge-blue);
+        color: var(--accent);
+      }
+
+      /* CHARTS */
+      .charts-row {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 18px;
+        margin-bottom: 22px;
+      }
+      .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 18px 20px;
+        transition: var(--transition-theme);
+      }
+      .chart-title {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .chart-sub {
+        font-size: 11px;
+        color: var(--text2);
+        margin-bottom: 16px;
+      }
+      .bar-labels {
+        display: flex;
+        margin-top: 5px;
+      }
+      .bar-label-item {
+        flex: 1;
+        text-align: center;
+        font-size: 10px;
+        color: var(--text2);
+      }
+      .clickable-bar {
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      .clickable-bar:hover {
+        opacity: 0.75;
+      }
+      .donut-wrap {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .donut-legend {
+        flex: 1;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 9px;
+        font-size: 12px;
+      }
+      .legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      /* DRILL */
+      .drill-panel {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 18px 20px;
+        margin-bottom: 22px;
+        display: none;
+      }
+      .drill-panel.visible {
+        display: block;
+      }
+      .drill-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .drill-back {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text2);
+        padding: 5px 11px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 11px;
+        font-family: "Times New Roman", Times, serif;
+        font-weight: 700;
+      }
+      .drill-back:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .drill-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .brand-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 5px;
+      }
+      .brand-bar-label {
+        width: 84px;
+        font-size: 12px;
+        color: var(--text2);
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .brand-bar-track {
+        flex: 1;
+        background: var(--surface3);
+        border-radius: 3px;
+        height: 9px;
+        overflow: hidden;
+      }
+      .brand-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s;
+      }
+      .brand-bar-val {
+        width: 34px;
+        font-size: 11px;
+        color: var(--text2);
+      }
+
+      /* TABLE */
+      .table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .table-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .table-search {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 7px 11px;
+        color: var(--text);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 13px;
+        outline: none;
+        width: 210px;
+      }
+      .table-search:focus {
+        border-color: var(--accent);
+      }
+      .btn {
+        padding: 6px 13px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-family: "Times New Roman", Times, serif;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.2s;
+        font-weight: 700;
+      }
+      .btn-outline {
+        background: none;
+        border-color: var(--border);
+        color: var(--text2);
+      }
+      .btn-outline:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-add {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .btn-add:hover {
+        opacity: 0.85;
+      }
+      .btn-danger {
+        background: none;
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .btn-danger:hover {
+        background: var(--red);
+        color: #fff;
+      }
+      .btn-warn {
+        background: none;
+        border-color: var(--yellow);
+        color: var(--yellow);
+      }
+      .btn-warn:hover {
+        background: var(--yellow);
+        color: #000;
+      }
+      .btn-success {
+        background: var(--green);
+        border-color: var(--green);
+        color: #fff;
+      }
+      .btn-success:hover {
+        opacity: 0.85;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      thead th {
+        padding: 9px 14px;
+        text-align: left;
+        font-size: 10px;
+        color: var(--text3);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface2);
+        font-weight: 700;
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.12s;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: var(--surface2);
+      }
+      tbody td {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+      .stock-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .stock-ok {
+        background: var(--stock-ok);
+        color: var(--green);
+      }
+      .stock-low {
+        background: var(--stock-low);
+        color: var(--yellow);
+      }
+      .stock-out {
+        background: var(--stock-out);
+        color: var(--red);
+      }
+      .stock-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .row-actions {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .icon-btn {
+        padding: 4px 9px;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        color: var(--text2);
+        cursor: pointer;
+        font-size: 11px;
+        font-family: "Times New Roman", Times, serif;
+        transition: all 0.2s;
+        font-weight: 700;
+      }
+      .icon-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .icon-btn.del:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .prod-thumb {
+        width: 34px;
+        height: 26px;
+        border-radius: 4px;
+        background: var(--img-bg);
+        object-fit: contain;
+        padding: 2px;
+      }
+      tr.low-stock-row td {
+        background: var(--low-row) !important;
+      }
+      tr.out-stock-row td {
+        background: var(--out-row) !important;
+      }
+
+      /* FILTERS / CHIPS */
+      .order-filter-row {
+        display: flex;
+        gap: 7px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .filter-chip {
+        padding: 5px 13px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        color: var(--text2);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 700;
+      }
+      .filter-chip.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--badge-blue);
+      }
+
+      /* RETURNS */
+      .returns-notice {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--green);
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: 12px;
+        color: var(--text2);
+        margin-bottom: 16px;
+      }
+
+      /* USERS */
+      .users-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      .users-search-wrap {
+        position: relative;
+        flex: 1;
+        max-width: 320px;
+      }
+      .users-search-wrap svg {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: var(--text3);
+      }
+      .users-search {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 12px 8px 34px;
+        color: var(--text);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .users-search:focus {
+        border-color: var(--accent);
+      }
+      .users-filter-chips {
+        display: flex;
+        gap: 6px;
+      }
+      .user-card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .user-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+      }
+      .user-card-top {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+      }
+      .uc-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        flex-shrink: 0;
+        color: #fff;
+      }
+      .uc-name {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .uc-email {
+        font-size: 11px;
+        color: var(--text2);
+      }
+      .uc-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .uc-role-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      [data-theme="dark"] .role-user {
+        background: #102028;
+        color: #38bdf8;
+      }
+      [data-theme="dark"] .role-admin {
+        background: #1a1040;
+        color: var(--accent2);
+      }
+      [data-theme="dark"] .role-superadmin {
+        background: #1a0030;
+        color: #e879f9;
+      }
+      [data-theme="light"] .role-user {
+        background: #dbeafe;
+        color: #0284c7;
+      }
+      [data-theme="light"] .role-admin {
+        background: #ede9fe;
+        color: var(--accent2);
+      }
+      [data-theme="light"] .role-superadmin {
+        background: #fae8ff;
+        color: #a21caf;
+      }
+
+      /* MODAL */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(3px);
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        width: 460px;
+        max-width: 95vw;
+        padding: 28px;
+        position: relative;
+        box-shadow: var(--shadow);
+      }
+      .modal::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 10px 10px 0 0;
+        background: linear-gradient(90deg, var(--accent2), var(--accent));
+      }
+      .modal-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .modal-sub {
+        font-size: 12px;
+        color: var(--text2);
+        margin-bottom: 20px;
+      }
+      .modal-close {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text2);
+        font-size: 12px;
+        cursor: pointer;
+        font-family: "Times New Roman", Times, serif;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 700;
+      }
+      .modal-close:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .modal-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 18px;
+        justify-content: flex-end;
+      }
+
+      /* NOTIF */
+      .notif-area {
+        position: fixed;
+        top: 16px;
+        right: 20px;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+      }
+      .notif {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 11px 15px;
+        font-size: 13px;
+        max-width: 300px;
+        box-shadow: var(--shadow);
+        animation: slideIn 0.3s ease;
+        pointer-events: auto;
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+      }
+      .notif.success {
+        border-left: 3px solid var(--green);
+      }
+      .notif.error {
+        border-left: 3px solid var(--red);
+      }
+      .notif.info {
+        border-left: 3px solid var(--accent);
+      }
+      .notif-icon {
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(40px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--surface3);
+        border-radius: 3px;
+      }
+      @media (max-width: 960px) {
+        .stats-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .charts-row {
+          grid-template-columns: 1fr;
+        }
+        .user-card-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- LOGIN -->
+    <div class="screen active" id="screen-login">
+      <div class="login-card">
+        <button
+          class="login-theme-link"
+          onclick="toggleTheme()"
+          id="login-theme-btn"
+        >
+          Light Mode
+        </button>
+        <div class="login-logo">OfficeStock</div>
+        <div class="login-title">Welcome back</div>
+        <div class="login-sub">Sign in to manage your office inventory</div>
+        <div class="field-wrap">
+          <label class="field-label">Email address</label
+          ><input class="field-input" type="email" value="admin@company.com" />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Password</label
+          ><input class="field-input" type="password" value="password" />
+        </div>
+        <div style="margin-bottom: 8px">
+          <label class="field-label">Login as</label>
+        </div>
+        <div class="role-select-row">
+          <div class="role-btn" data-role="user" onclick="selectRole('user')">
+            User
+          </div>
+          <div
+            class="role-btn active"
+            data-role="admin"
+            onclick="selectRole('admin')"
+          >
+            Admin
+          </div>
+          <div
+            class="role-btn"
+            data-role="superadmin"
+            onclick="selectRole('superadmin')"
+          >
+            Super Admin
+          </div>
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Sign in</button>
+        <div class="login-hint">Demo — select any role and click Sign in</div>
+      </div>
+    </div>
+
+    <!-- APP -->
+    <div class="screen" id="screen-app">
+      <div class="sidebar">
+        <div class="sidebar-top">
+          <div class="sidebar-logo">OfficeStock</div>
+          <div class="sidebar-appname">Inventory Hub</div>
+        </div>
+        <div class="sidebar-nav">
+          <div class="nav-section">Overview</div>
+          <div
+            class="nav-item"
+            id="nav-dashboard"
+            onclick="goPage('dashboard')"
+          >
+            <span class="nav-icon">DB</span>Dashboard
+          </div>
+          <div class="nav-section">Inventory</div>
+          <div class="nav-item" onclick="goPage('inventory')">
+            <span class="nav-icon">PR</span>All Products
+          </div>
+          <div class="nav-item" onclick="goPage('laptops')">
+            <span class="nav-icon">LT</span>Laptops
+          </div>
+          <div class="nav-item" onclick="goPage('peripherals')">
+            <span class="nav-icon">KM</span>Peripherals
+          </div>
+          <div class="nav-item" onclick="goPage('routers')">
+            <span class="nav-icon">RT</span>Routers
+          </div>
+          <div class="nav-section">Requests</div>
+          <div class="nav-item" onclick="goPage('orders')">
+            <span class="nav-icon">OR</span>Orders
+          </div>
+          <div class="nav-item" onclick="goPage('myproducts')">
+            <span class="nav-icon">MP</span>My Products
+          </div>
+          <div id="admin-nav">
+            <div class="nav-section">Management</div>
+            <div class="nav-item" onclick="goPage('restock')">
+              <span class="nav-icon">RS</span>Restock Manager
+            </div>
+          </div>
+          <div id="superadmin-nav" style="display: none">
+            <div class="nav-section">Super Admin</div>
+            <div class="nav-item" onclick="goPage('users')">
+              <span class="nav-icon">US</span>Users &amp; Roles
+            </div>
+          </div>
+        </div>
+        <div class="theme-toggle-pill" onclick="toggleTheme()">
+          <span class="pill-label" id="pill-label">Light Mode</span>
+          <div class="pill-track" id="pill-track">
+            <div class="pill-thumb"></div>
+          </div>
+        </div>
+        <div class="sidebar-user">
+          <div class="user-avatar" id="sidebar-avatar">A</div>
+          <div>
+            <div class="user-name" id="sidebar-name">Alex Morgan</div>
+            <div class="user-role" id="sidebar-role">ADMIN</div>
+          </div>
+          <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <!-- DASHBOARD -->
+        <div class="page" id="page-dashboard">
+          <div class="breadcrumb">Home / <span>Dashboard</span></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">Dashboard</div>
+              <div class="page-sub">
+                Live inventory snapshot &amp; demand overview
+              </div>
+            </div>
+            <div
+              style="font-size: 11px; color: var(--text3); align-self: center"
+            >
+              Updated just now
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-card" style="--accent-bar: var(--accent)">
+              <div class="stat-label">Total SKUs</div>
+              <div class="stat-val">24</div>
+              <div class="stat-meta">Across 3 categories</div>
+            </div>
+            <div class="stat-card" style="--accent-bar: var(--red)">
+              <div class="stat-label">Low / Out of Stock</div>
+              <div class="stat-val" style="color: var(--red)">5</div>
+              <div class="stat-meta">
+                <span class="stat-badge badge-red">2 out-of-stock</span>
+              </div>
+            </div>
+            <div class="stat-card" style="--accent-bar: var(--green)">
+              <div class="stat-label">Open Orders</div>
+              <div class="stat-val" style="color: var(--green)">12</div>
+              <div class="stat-meta">
+                <span class="stat-badge badge-yellow">3 pending</span>
+              </div>
+            </div>
+            <div class="stat-card" style="--accent-bar: var(--accent2)">
+              <div class="stat-label">Total Units</div>
+              <div class="stat-val">347</div>
+              <div class="stat-meta">+18 restocked this week</div>
+            </div>
+          </div>
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-title">Demand by Category</div>
+              <div class="chart-sub">
+                Click a bar to see brand-level breakdown
+              </div>
+              <svg
+                id="bar-svg"
+                width="100%"
+                height="178"
+                viewBox="0 0 500 178"
+              ></svg>
+              <div class="bar-labels" id="bar-labels"></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Usage Distribution</div>
+              <div class="chart-sub">Units currently checked out</div>
+              <div class="donut-wrap">
+                <svg width="108" height="108" viewBox="0 0 108 108">
+                  <circle
+                    cx="54"
+                    cy="54"
+                    r="40"
+                    fill="none"
+                    stroke="var(--surface3)"
+                    stroke-width="15"
+                  />
+                  <circle
+                    cx="54"
+                    cy="54"
+                    r="40"
+                    fill="none"
+                    stroke="#4f8ef7"
+                    stroke-width="15"
+                    stroke-dasharray="105 147"
+                    stroke-dashoffset="0"
+                    transform="rotate(-90 54 54)"
+                  />
+                  <circle
+                    cx="54"
+                    cy="54"
+                    r="40"
+                    fill="none"
+                    stroke="#7c5cfc"
+                    stroke-width="15"
+                    stroke-dasharray="65 187"
+                    stroke-dashoffset="-105"
+                    transform="rotate(-90 54 54)"
+                  />
+                  <circle
+                    cx="54"
+                    cy="54"
+                    r="40"
+                    fill="none"
+                    stroke="#22c55e"
+                    stroke-width="15"
+                    stroke-dasharray="82 170"
+                    stroke-dashoffset="-170"
+                    transform="rotate(-90 54 54)"
+                  />
+                  <text
+                    x="54"
+                    y="58"
+                    text-anchor="middle"
+                    fill="var(--text)"
+                    font-family="Times New Roman"
+                    font-size="13"
+                    font-weight="700"
+                  >
+                    264
+                  </text>
+                </svg>
+                <div class="donut-legend">
+                  <div class="legend-item">
+                    <div class="legend-dot" style="background: #4f8ef7"></div>
+                    <div>
+                      <div>Laptops</div>
+                      <div style="font-size: 10px; color: var(--text2)">
+                        110 units (42%)
+                      </div>
+                    </div>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-dot" style="background: #7c5cfc"></div>
+                    <div>
+                      <div>Peripherals</div>
+                      <div style="font-size: 10px; color: var(--text2)">
+                        68 units (26%)
+                      </div>
+                    </div>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-dot" style="background: #22c55e"></div>
+                    <div>
+                      <div>Routers</div>
+                      <div style="font-size: 10px; color: var(--text2)">
+                        86 units (32%)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="drill-panel" id="drill-panel">
+            <div class="drill-header">
+              <button class="drill-back" onclick="closeDrill()">Back</button>
+              <div class="drill-title" id="drill-title"></div>
+            </div>
+            <div id="drill-content"></div>
+          </div>
+          <div id="low-stock-alert" style="display: none">
+            <div
+              style="
+                font-size: 13px;
+                font-weight: 700;
+                margin-bottom: 10px;
+                color: var(--red);
+              "
+            >
+              Low &amp; Out-of-Stock Items
+            </div>
+            <div class="table-card">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Brand</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="out-stock-row">
+                    <td>Wireless Mouse</td>
+                    <td>Peripherals</td>
+                    <td>Logitech</td>
+                    <td style="color: var(--red)">0</td>
+                    <td>
+                      <span class="stock-pill stock-out"
+                        ><span class="stock-dot"></span>Out of Stock</span
+                      >
+                    </td>
+                  </tr>
+                  <tr class="low-stock-row">
+                    <td>Latitude 15"</td>
+                    <td>Laptops</td>
+                    <td>Dell</td>
+                    <td style="color: var(--yellow)">2</td>
+                    <td>
+                      <span class="stock-pill stock-low"
+                        ><span class="stock-dot"></span>Low Stock</span
+                      >
+                    </td>
+                  </tr>
+                  <tr class="out-stock-row">
+                    <td>Q Pro Mechanical</td>
+                    <td>Peripherals</td>
+                    <td>Keychron</td>
+                    <td style="color: var(--red)">0</td>
+                    <td>
+                      <span class="stock-pill stock-out"
+                        ><span class="stock-dot"></span>Out of Stock</span
+                      >
+                    </td>
+                  </tr>
+                  <tr class="low-stock-row">
+                    <td>Nighthawk AX12</td>
+                    <td>Routers</td>
+                    <td>Netgear</td>
+                    <td style="color: var(--yellow)">3</td>
+                    <td>
+                      <span class="stock-pill stock-low"
+                        ><span class="stock-dot"></span>Low Stock</span
+                      >
+                    </td>
+                  </tr>
+                  <tr class="low-stock-row">
+                    <td>Ultrabook Pro</td>
+                    <td>Laptops</td>
+                    <td>Lenovo</td>
+                    <td style="color: var(--yellow)">2</td>
+                    <td>
+                      <span class="stock-pill stock-low"
+                        ><span class="stock-dot"></span>Low Stock</span
+                      >
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALL PRODUCTS -->
+        <div class="page" id="page-inventory">
+          <div class="breadcrumb">Home / <span>All Products</span></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">All Products</div>
+              <div class="page-sub">
+                Complete inventory across all categories
+              </div>
+            </div>
+            <div id="admin-add-btn" style="display: none">
+              <button class="btn btn-add" onclick="openModal('add-product')">
+                + Add Product
+              </button>
+            </div>
+          </div>
+          <div class="table-card">
+            <div class="table-toolbar">
+              <input class="table-search" placeholder="Search products..." />
+              <div style="display: flex; gap: 7px">
+                <button class="btn btn-outline">Filter</button
+                ><button class="btn btn-outline">Export</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Brand</th>
+                  <th class="admin-only-col">Stock</th>
+                  <th class="admin-only-col">In Use</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>ThinkPad X1 Carbon</td>
+                  <td>Laptops</td>
+                  <td>Lenovo</td>
+                  <td class="admin-only-col">18</td>
+                  <td class="admin-only-col">14</td>
+                  <td>
+                    <span class="stock-pill stock-ok"
+                      ><span class="stock-dot"></span>In Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Edit</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>MacBook Pro 14"</td>
+                  <td>Laptops</td>
+                  <td>Apple</td>
+                  <td class="admin-only-col">22</td>
+                  <td class="admin-only-col">19</td>
+                  <td>
+                    <span class="stock-pill stock-ok"
+                      ><span class="stock-dot"></span>In Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Edit</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr class="low-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Latitude 15"</td>
+                  <td>Laptops</td>
+                  <td>Dell</td>
+                  <td class="admin-only-col" style="color: var(--yellow)">2</td>
+                  <td class="admin-only-col">2</td>
+                  <td>
+                    <span class="stock-pill stock-low"
+                      ><span class="stock-dot"></span>Low Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Restock</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr class="out-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>MX Master 3S</td>
+                  <td>Peripherals</td>
+                  <td>Logitech</td>
+                  <td class="admin-only-col" style="color: var(--red)">0</td>
+                  <td class="admin-only-col">0</td>
+                  <td>
+                    <span class="stock-pill stock-out"
+                      ><span class="stock-dot"></span>Out of Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Restock</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Pro Wireless Mouse</td>
+                  <td>Peripherals</td>
+                  <td>Microsoft</td>
+                  <td class="admin-only-col">15</td>
+                  <td class="admin-only-col">12</td>
+                  <td>
+                    <span class="stock-pill stock-ok"
+                      ><span class="stock-dot"></span>In Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Edit</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr class="out-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Q Pro Mechanical</td>
+                  <td>Peripherals</td>
+                  <td>Keychron</td>
+                  <td class="admin-only-col" style="color: var(--red)">0</td>
+                  <td class="admin-only-col">0</td>
+                  <td>
+                    <span class="stock-pill stock-out"
+                      ><span class="stock-dot"></span>Out of Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Restock</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1585298723682-7115561c51b7?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Arc Compact Keyboard</td>
+                  <td>Peripherals</td>
+                  <td>Microsoft</td>
+                  <td class="admin-only-col">9</td>
+                  <td class="admin-only-col">7</td>
+                  <td>
+                    <span class="stock-pill stock-ok"
+                      ><span class="stock-dot"></span>In Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Edit</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Archer AX6000</td>
+                  <td>Routers</td>
+                  <td>TP-Link</td>
+                  <td class="admin-only-col">11</td>
+                  <td class="admin-only-col">9</td>
+                  <td>
+                    <span class="stock-pill stock-ok"
+                      ><span class="stock-dot"></span>In Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Edit</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr class="low-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Nighthawk AX12</td>
+                  <td>Routers</td>
+                  <td>Netgear</td>
+                  <td class="admin-only-col" style="color: var(--yellow)">3</td>
+                  <td class="admin-only-col">3</td>
+                  <td>
+                    <span class="stock-pill stock-low"
+                      ><span class="stock-dot"></span>Low Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Restock</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1610302002853-17fa7f4ca15d?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>UniFi Dream Machine</td>
+                  <td>Routers</td>
+                  <td>Ubiquiti</td>
+                  <td class="admin-only-col">7</td>
+                  <td class="admin-only-col">6</td>
+                  <td>
+                    <span class="stock-pill stock-ok"
+                      ><span class="stock-dot"></span>In Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="icon-btn">View</button
+                    ><button class="icon-btn admin-only" style="display: none">
+                      Edit</button
+                    ><button
+                      class="icon-btn del admin-only"
+                      style="display: none"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LAPTOPS -->
+        <div class="page" id="page-laptops">
+          <div class="breadcrumb">Home / Products / <span>Laptops</span></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">Laptops</div>
+              <div class="page-sub">3 brands · 5 models</div>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <button class="btn btn-add" onclick="openModal('order')">
+                Place Order</button
+              ><button
+                class="btn btn-outline admin-only"
+                style="display: none"
+                onclick="openModal('add-product')"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+          <div class="product-grid">
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&q=80"
+                  alt="ThinkPad"
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >18 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">ThinkPad X1 Carbon</div>
+                <div class="product-brand">LENOVO · i7 / 16GB</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    18
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=300&q=80"
+                  alt="MacBook Pro"
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >22 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">MacBook Pro 14" M3</div>
+                <div class="product-brand">APPLE · M3 Pro / 18GB</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    22
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=300&q=80"
+                  alt="MacBook Air"
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >8 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">MacBook Air 15" M2</div>
+                <div class="product-brand">APPLE · M2 / 16GB</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    8
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=80"
+                  alt="ThinkPad E14"
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >12 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">ThinkPad E14 Gen 5</div>
+                <div class="product-brand">LENOVO · i5 / 8GB</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    12
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card low-border" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=300&q=80"
+                  alt="Dell Latitude"
+                /><span class="prod-stock-badge badge-yellow"
+                  >Only 2 left!</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">Latitude 15 3530</div>
+                <div class="product-brand">DELL · i5 / 8GB</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--yellow)"
+                  >
+                    2
+                  </div> -->
+                  <button class="product-order-btn btn-warn">Request</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PERIPHERALS -->
+        <div class="page" id="page-peripherals">
+          <div class="breadcrumb">
+            Home / Products / <span>Peripherals</span>
+          </div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">Mouse &amp; Keyboards</div>
+              <div class="page-sub">2 brands · 4 models</div>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <button class="btn btn-add" onclick="openModal('order')">
+                Place Order</button
+              ><button
+                class="btn btn-outline admin-only"
+                style="display: none"
+                onclick="openModal('add-product')"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+          <div class="product-grid">
+            <div class="product-card out-border">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&q=80"
+                  alt="MX Master"
+                /><span class="prod-stock-badge badge-red">Out of Stock</span>
+              </div>
+              <div class="product-info">
+                <div class="product-name">MX Master 3S</div>
+                <div class="product-brand">LOGITECH · Mouse</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--red)"
+                  >
+                    0
+                  </div> -->
+                  <button
+                    class="product-order-btn btn-danger"
+                    disabled
+                    style="opacity: 0.4; cursor: not-allowed"
+                  >
+                    N/A
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=300&q=80"
+                  alt="MS Mouse"
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >15 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">Pro Wireless Mouse</div>
+                <div class="product-brand">MICROSOFT · Mouse</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    15
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card out-border">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&q=80"
+                  alt="Keychron Q Pro"
+                /><span class="prod-stock-badge badge-red">Out of Stock</span>
+              </div>
+              <div class="product-info">
+                <div class="product-name">Q Pro Mechanical KB</div>
+                <div class="product-brand">KEYCHRON · Keyboard</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--red)"
+                  >
+                    0
+                  </div> -->
+                  <button
+                    class="product-order-btn btn-danger"
+                    disabled
+                    style="opacity: 0.4; cursor: not-allowed"
+                  >
+                    N/A
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1585298723682-7115561c51b7?w=300&q=80"
+                  alt="Arc Keyboard"
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >9 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">Arc Compact Keyboard</div>
+                <div class="product-brand">MICROSOFT · Keyboard</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    9
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROUTERS -->
+        <div class="page" id="page-routers">
+          <div class="breadcrumb">Home / Products / <span>Routers</span></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">Routers</div>
+              <div class="page-sub">3 brands · 6 models</div>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <button class="btn btn-add" onclick="openModal('order')">
+                Place Order</button
+              ><button
+                class="btn btn-outline admin-only"
+                style="display: none"
+                onclick="openModal('add-product')"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+          <div class="product-grid">
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80"
+                  alt=""
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >11 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">Archer AX6000</div>
+                <div class="product-brand">TP-LINK · Wi-Fi 6</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    11
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1605146769289-440113cc3d00?w=300&q=80"
+                  alt=""
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >6 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">Deco XE75 Pro</div>
+                <div class="product-brand">TP-LINK · Wi-Fi 6E</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    6
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card low-border" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=300&q=80"
+                  alt=""
+                /><span class="prod-stock-badge badge-yellow"
+                  >Only 3 left!</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">Nighthawk AX12</div>
+                <div class="product-brand">NETGEAR · Wi-Fi 6</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--yellow)"
+                  >
+                    3
+                  </div> -->
+                  <button class="product-order-btn btn-warn">Request</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1601445638532-f1f1b53a0e4a?w=300&q=80"
+                  alt=""
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >8 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">Orbi Pro WiFi 6</div>
+                <div class="product-brand">NETGEAR · Wi-Fi 6</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    8
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1584043720379-b56cd9199c94?w=300&q=80"
+                  alt=""
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >7 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">UniFi Dream Machine</div>
+                <div class="product-brand">UBIQUITI · Wi-Fi 6</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    7
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" onclick="openModal('order')">
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1610302002853-17fa7f4ca15d?w=300&q=80"
+                  alt=""
+                /><span class="prod-stock-badge badge-green admin-only-badge"
+                  >14 units</span
+                >
+              </div>
+              <div class="product-info">
+                <div class="product-name">UniFi AP AC Pro</div>
+                <div class="product-brand">UBIQUITI · Wi-Fi 5</div>
+                <div class="product-meta">
+                  <!-- <div
+                    class="product-stock-num admin-only-num"
+                    style="color: var(--green)"
+                  >
+                    14
+                  </div> -->
+                  <button class="product-order-btn btn-outline">Order</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ORDERS -->
+        <div class="page" id="page-orders">
+          <div class="breadcrumb">Home / <span>Orders</span></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">Orders</div>
+              <div class="page-sub">Track and manage supply requests</div>
+            </div>
+            <button class="btn btn-add" onclick="openModal('order')">
+              + New Order
+            </button>
+          </div>
+          <div class="order-filter-row">
+            <div class="filter-chip active" onclick="filterChip(this)">All</div>
+            <div class="filter-chip" onclick="filterChip(this)">Pending</div>
+            <div class="filter-chip" onclick="filterChip(this)">Approved</div>
+            <div class="filter-chip" onclick="filterChip(this)">Cancelled</div>
+            <div class="filter-chip" onclick="filterChip(this)">Delivered</div>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Product</th>
+                  <th>Requested By</th>
+                  <th>Qty</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color: var(--text2)">#ORD-2024</td>
+                  <td>MacBook Pro 14"</td>
+                  <td>Sarah K.</td>
+                  <td>1</td>
+                  <td style="color: var(--text2); font-size: 12px">
+                    Mar 5, 2025
+                  </td>
+                  <td><span class="stat-badge badge-yellow">Pending</span></td>
+                  <td class="row-actions">
+                    <button
+                      class="btn btn-success admin-only"
+                      style="display: none"
+                      onclick="approveOrder(this)"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      class="btn btn-danger"
+                      onclick="openModal('cancel')"
+                    >
+                      Cancel
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="color: var(--text2)">#ORD-2023</td>
+                  <td>UniFi Dream Machine</td>
+                  <td>IT Team</td>
+                  <td>2</td>
+                  <td style="color: var(--text2); font-size: 12px">
+                    Mar 4, 2025
+                  </td>
+                  <td><span class="stat-badge badge-blue">Approved</span></td>
+                  <td class="row-actions">
+                    <button class="btn btn-outline">View</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="color: var(--text2)">#ORD-2022</td>
+                  <td>Arc Keyboard</td>
+                  <td>Dev Team</td>
+                  <td>4</td>
+                  <td style="color: var(--text2); font-size: 12px">
+                    Mar 3, 2025
+                  </td>
+                  <td><span class="stat-badge badge-green">Delivered</span></td>
+                  <td class="row-actions">
+                    <button class="btn btn-outline">View</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="color: var(--text2)">#ORD-2021</td>
+                  <td>ThinkPad X1 Carbon</td>
+                  <td>Finance</td>
+                  <td>3</td>
+                  <td style="color: var(--text2); font-size: 12px">
+                    Mar 2, 2025
+                  </td>
+                  <td><span class="stat-badge badge-yellow">Pending</span></td>
+                  <td class="row-actions">
+                    <button
+                      class="btn btn-success admin-only"
+                      style="display: none"
+                      onclick="approveOrder(this)"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      class="btn btn-danger"
+                      onclick="openModal('cancel')"
+                    >
+                      Cancel
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="color: var(--text2)">#ORD-2020</td>
+                  <td>MX Master 3S</td>
+                  <td>Design Team</td>
+                  <td>5</td>
+                  <td style="color: var(--text2); font-size: 12px">
+                    Mar 1, 2025
+                  </td>
+                  <td><span class="stat-badge badge-red">Cancelled</span></td>
+                  <td class="row-actions">
+                    <button class="btn btn-outline">View</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="color: var(--text2)">#ORD-2019</td>
+                  <td>Nighthawk AX12</td>
+                  <td>IT Team</td>
+                  <td>2</td>
+                  <td style="color: var(--text2); font-size: 12px">
+                    Feb 28, 2025
+                  </td>
+                  <td><span class="stat-badge badge-yellow">Pending</span></td>
+                  <td class="row-actions">
+                    <button
+                      class="btn btn-success admin-only"
+                      style="display: none"
+                      onclick="approveOrder(this)"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      class="btn btn-danger"
+                      onclick="openModal('cancel')"
+                    >
+                      Cancel
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MY PRODUCTS -->
+        <div class="page" id="page-myproducts">
+          <div class="breadcrumb">Home / <span>My Products</span></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">My Products</div>
+              <div class="page-sub">
+                Items currently checked out to you — click Return to send back
+              </div>
+            </div>
+          </div>
+          <div class="product-grid" id="my-products-grid">
+            <div
+              class="product-card"
+              data-product="ThinkPad X1 Carbon"
+              data-img="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&q=80"
+            >
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&q=80"
+                  alt="ThinkPad"
+                />
+              </div>
+              <div class="product-info">
+                <div class="product-name">ThinkPad X1 Carbon</div>
+                <div class="product-brand">LENOVO · Checked out Mar 1</div>
+                <div class="product-meta" style="margin-top: 8px">
+                  <button
+                    class="product-order-btn btn-danger"
+                    onclick="returnProduct(this)"
+                  >
+                    Return
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="product-card"
+              data-product='MacBook Pro 14"'
+              data-img="https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=300&q=80"
+            >
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=300&q=80"
+                  alt="MacBook Pro"
+                />
+              </div>
+              <div class="product-info">
+                <div class="product-name">MacBook Pro 14"</div>
+                <div class="product-brand">APPLE · Checked out Feb 20</div>
+                <div class="product-meta" style="margin-top: 8px">
+                  <button
+                    class="product-order-btn btn-danger"
+                    onclick="returnProduct(this)"
+                  >
+                    Return
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="product-card"
+              data-product="Arc Compact Keyboard"
+              data-img="https://images.unsplash.com/photo-1585298723682-7115561c51b7?w=300&q=80"
+            >
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1585298723682-7115561c51b7?w=300&q=80"
+                  alt="Arc Keyboard"
+                />
+              </div>
+              <div class="product-info">
+                <div class="product-name">Arc Compact Keyboard</div>
+                <div class="product-brand">MICROSOFT · Checked out Feb 15</div>
+                <div class="product-meta" style="margin-top: 8px">
+                  <button
+                    class="product-order-btn btn-danger"
+                    onclick="returnProduct(this)"
+                  >
+                    Return
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="product-card"
+              data-product="Archer AX6000"
+              data-img="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80"
+            >
+              <div class="product-img-wrap">
+                <img
+                  src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80"
+                  alt="Archer AX6000"
+                />
+              </div>
+              <div class="product-info">
+                <div class="product-name">Archer AX6000</div>
+                <div class="product-brand">TP-LINK · Checked out Feb 10</div>
+                <div class="product-meta" style="margin-top: 8px">
+                  <button
+                    class="product-order-btn btn-danger"
+                    onclick="returnProduct(this)"
+                  >
+                    Return
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            id="my-products-empty"
+            style="
+              display: none;
+              text-align: center;
+              padding: 60px 20px;
+              color: var(--text2);
+            "
+          >
+            <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px">
+              No products checked out
+            </div>
+            <div style="font-size: 13px">All items have been returned.</div>
+          </div>
+        </div>
+
+        <!-- RESTOCK -->
+        <div class="page" id="page-restock">
+          <div class="breadcrumb">Home / Management / <span>Restock</span></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">Restock Manager</div>
+              <div class="page-sub">Add, remove or adjust stock levels</div>
+            </div>
+            <button class="btn btn-add" onclick="openModal('restock')">
+              + Restock Items
+            </button>
+          </div>
+          <div class="table-card">
+            <div class="table-toolbar">
+              <div style="font-size: 12px; color: var(--text2)">
+                Items needing attention
+              </div>
+              <div style="display: flex; gap: 7px">
+                <button class="btn btn-outline">All Items</button
+                ><button class="btn btn-warn">Low Only</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Current</th>
+                  <th>Min. Level</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="restock-tbody">
+                <tr class="out-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>MX Master 3S</td>
+                  <td>Peripherals</td>
+                  <td style="color: var(--red)">0</td>
+                  <td>5</td>
+                  <td>
+                    <span class="stock-pill stock-out"
+                      ><span class="stock-dot"></span>Out of Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="btn btn-add" onclick="openModal('restock')">
+                      Restock</button
+                    ><button
+                      class="btn btn-danger"
+                      onclick="showNotif('Item removed', 'error')"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+                <tr class="low-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Latitude 15"</td>
+                  <td>Laptops</td>
+                  <td style="color: var(--yellow)">2</td>
+                  <td>10</td>
+                  <td>
+                    <span class="stock-pill stock-low"
+                      ><span class="stock-dot"></span>Low Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="btn btn-add" onclick="openModal('restock')">
+                      Restock</button
+                    ><button
+                      class="btn btn-danger"
+                      onclick="showNotif('Item removed', 'error')"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+                <tr class="out-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Q Pro Mechanical</td>
+                  <td>Peripherals</td>
+                  <td style="color: var(--red)">0</td>
+                  <td>5</td>
+                  <td>
+                    <span class="stock-pill stock-out"
+                      ><span class="stock-dot"></span>Out of Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="btn btn-add" onclick="openModal('restock')">
+                      Restock</button
+                    ><button
+                      class="btn btn-danger"
+                      onclick="showNotif('Item removed', 'error')"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+                <tr class="low-stock-row">
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>Nighthawk AX12</td>
+                  <td>Routers</td>
+                  <td style="color: var(--yellow)">3</td>
+                  <td>8</td>
+                  <td>
+                    <span class="stock-pill stock-low"
+                      ><span class="stock-dot"></span>Low Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button class="btn btn-add" onclick="openModal('restock')">
+                      Restock</button
+                    ><button
+                      class="btn btn-danger"
+                      onclick="showNotif('Item removed', 'error')"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img
+                      class="prod-thumb"
+                      src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=80&q=80"
+                      alt=""
+                    />
+                  </td>
+                  <td>ThinkPad X1 Carbon</td>
+                  <td>Laptops</td>
+                  <td>18</td>
+                  <td>10</td>
+                  <td>
+                    <span class="stock-pill stock-ok"
+                      ><span class="stock-dot"></span>In Stock</span
+                    >
+                  </td>
+                  <td class="row-actions">
+                    <button
+                      class="btn btn-outline"
+                      onclick="openModal('restock')"
+                    >
+                      Adjust</button
+                    ><button
+                      class="btn btn-danger"
+                      onclick="showNotif('Item removed', 'error')"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- USERS -->
+        <div class="page" id="page-users">
+          <div class="breadcrumb">
+            Home / Super Admin / <span>Users &amp; Roles</span>
+          </div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">Users &amp; Roles</div>
+              <div class="page-sub">
+                Manage access, promote or demote members
+              </div>
+            </div>
+            <button class="btn btn-add" onclick="openModal('add-user')">
+              + Add User
+            </button>
+          </div>
+          <div class="users-toolbar">
+            <div class="users-search-wrap">
+              <svg
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                class="users-search"
+                id="users-search"
+                placeholder="Search by name, email or role..."
+                oninput="filterUsers()"
+              />
+            </div>
+            <div class="users-filter-chips">
+              <div
+                class="filter-chip active"
+                onclick="setUserFilter('all', this)"
+              >
+                All
+              </div>
+              <div
+                class="filter-chip"
+                onclick="setUserFilter('superadmin', this)"
+              >
+                Super Admins
+              </div>
+              <div class="filter-chip" onclick="setUserFilter('admin', this)">
+                Admins
+              </div>
+              <div class="filter-chip" onclick="setUserFilter('user', this)">
+                Users
+              </div>
+            </div>
+          </div>
+          <div class="stats-row" style="grid-template-columns: repeat(3, 1fr)">
+            <div class="stat-card" style="--accent-bar: #0ea5e9">
+              <div class="stat-label">Users</div>
+              <div class="stat-val">8</div>
+              <div class="stat-meta">View &amp; order only</div>
+            </div>
+            <div class="stat-card" style="--accent-bar: var(--accent2)">
+              <div class="stat-label">Admins</div>
+              <div class="stat-val">3</div>
+              <div class="stat-meta">Inventory access</div>
+            </div>
+            <div class="stat-card" style="--accent-bar: #a21caf">
+              <div class="stat-label">Super Admins</div>
+              <div class="stat-val">2</div>
+              <div class="stat-meta">All access</div>
+            </div>
+          </div>
+          <div class="user-card-grid" id="user-card-grid">
+            <div
+              class="user-card"
+              data-role="superadmin"
+              data-name="Ahaan"
+              data-email="rohit@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="background: linear-gradient(135deg, #9333ea, #e879f9)"
+                >
+                  RS
+                </div>
+                <div>
+                  <div class="uc-name">Ahaan</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="c1b3aea9a8b581a2aeacb1a0afb8efa2aeac"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span class="uc-role-badge role-superadmin">Super Admin</span>
+              </div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-outline"
+                  disabled
+                  style="opacity: 0.35; cursor: not-allowed"
+                  title="Cannot demote another Super Admin"
+                >
+                  Demote</button
+                ><button
+                  class="btn btn-danger"
+                  disabled
+                  style="opacity: 0.35; cursor: not-allowed"
+                  title="Cannot delete a Super Admin"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="user-card"
+              data-role="superadmin"
+              data-name="Siddharth"
+              data-email="alex@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="background: linear-gradient(135deg, #9333ea, #e879f9)"
+                >
+                  AM
+                </div>
+                <div>
+                  <div class="uc-name">Siddharth</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="254449405d65464a4855444b5c0b464a48"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="uc-role-badge role-superadmin">Super Admin</span
+                ><span style="font-size: 10px; color: var(--text3)">(you)</span>
+              </div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-outline"
+                  disabled
+                  style="opacity: 0.35; cursor: not-allowed"
+                  title="Cannot demote yourself"
+                >
+                  Demote</button
+                ><button
+                  class="btn btn-danger"
+                  disabled
+                  style="opacity: 0.35; cursor: not-allowed"
+                  title="Cannot delete yourself"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="user-card"
+              data-role="admin"
+              data-name="Ananya R Bhat"
+              data-email="priya@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      var(--accent2),
+                      var(--accent)
+                    );
+                  "
+                >
+                  PR
+                </div>
+                <div>
+                  <div class="uc-name">Ananya R Bhat</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="5e2e2c37273f1e3d31332e3f3027703d3133"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div><span class="uc-role-badge role-admin">Admin</span></div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-add"
+                  onclick="
+                    showNotif(' Ananya R Bhat to Super Admin', 'success')
+                  "
+                >
+                  Promote</button
+                ><button
+                  class="btn btn-outline"
+                  onclick="showNotif('Ananya R Bhat demoted to User', 'info')"
+                >
+                  Demote</button
+                ><button
+                  class="btn btn-danger"
+                  onclick="showNotif('User deleted', 'error')"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="user-card"
+              data-role="admin"
+              data-name="Sridevi"
+              data-email="kevin@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      var(--accent2),
+                      var(--accent)
+                    );
+                  "
+                >
+                  KT
+                </div>
+                <div>
+                  <div class="uc-name">Sridevi</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="a5cec0d3cccbe5c6cac8d5c4cbdc8bc6cac8"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div><span class="uc-role-badge role-admin">Admin</span></div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-add"
+                  onclick="
+                    showNotif('Kevin promoted to Super Admin', 'success')
+                  "
+                >
+                  Promote</button
+                ><button
+                  class="btn btn-outline"
+                  onclick="showNotif('Kevin demoted to User', 'info')"
+                >
+                  Demote</button
+                ><button
+                  class="btn btn-danger"
+                  onclick="showNotif('User deleted', 'error')"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="user-card"
+              data-role="admin"
+              data-name="Nagashree"
+              data-email="meera@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      var(--accent2),
+                      var(--accent)
+                    );
+                  "
+                >
+                  MN
+                </div>
+                <div>
+                  <div class="uc-name">Nagashree</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="caa7afafb8ab8aa9a5a7baaba4b3e4a9a5a7"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div><span class="uc-role-badge role-admin">Admin</span></div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-add"
+                  onclick="
+                    showNotif('Nagashree promoted to Super Admin', 'success')
+                  "
+                >
+                  Promote</button
+                ><button
+                  class="btn btn-outline"
+                  onclick="showNotif('Nagashree demoted to User', 'info')"
+                >
+                  Demote</button
+                ><button
+                  class="btn btn-danger"
+                  onclick="showNotif('User deleted', 'error')"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="user-card"
+              data-role="user"
+              data-name="Yasmeen"
+              data-email="sarah@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="background: linear-gradient(135deg, #0ea5e9, #38bdf8)"
+                >
+                  SK
+                </div>
+                <div>
+                  <div class="uc-name">Yasmeen</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="36455744575e7655595b4657584f1855595b"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div><span class="uc-role-badge role-user">User</span></div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-add"
+                  onclick="showNotif('Yasmeen promoted to Admin', 'success')"
+                >
+                  Promote to Admin</button
+                ><button
+                  class="btn btn-danger"
+                  onclick="showNotif('User deleted', 'error')"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="user-card"
+              data-role="user"
+              data-name="Vihaan"
+              data-email="james@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="background: linear-gradient(135deg, #0ea5e9, #38bdf8)"
+                >
+                  JD
+                </div>
+                <div>
+                  <div class="uc-name">Vihaan</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="315b505c544271525e5c41505f481f525e5c"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div><span class="uc-role-badge role-user">User</span></div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-add"
+                  onclick="showNotif('Vihaan promoted to Admin', 'success')"
+                >
+                  Promote to Admin</button
+                ><button
+                  class="btn btn-danger"
+                  onclick="showNotif('User deleted', 'error')"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="user-card"
+              data-role="user"
+              data-name="Aahil"
+              data-email="arun@company.com"
+            >
+              <div class="user-card-top">
+                <div
+                  class="uc-avatar"
+                  style="background: linear-gradient(135deg, #0ea5e9, #38bdf8)"
+                >
+                  AP
+                </div>
+                <div>
+                  <div class="uc-name">Aahil</div>
+                  <div class="uc-email">
+                    <a
+                      href="/cdn-cgi/l/email-protection"
+                      class="__cf_email__"
+                      data-cfemail="bfdecdcad1ffdcd0d2cfded1c691dcd0d2"
+                      >[email&#160;protected]</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div><span class="uc-role-badge role-user">User</span></div>
+              <div class="uc-actions">
+                <button
+                  class="btn btn-add"
+                  onclick="showNotif('Aahil promoted to Admin', 'success')"
+                >
+                  Promote to Admin</button
+                ><button
+                  class="btn btn-danger"
+                  onclick="showNotif('User deleted', 'error')"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            id="users-empty"
+            style="
+              display: none;
+              text-align: center;
+              padding: 40px;
+              color: var(--text2);
+              font-size: 13px;
+            "
+          >
+            No users match your search.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modal-order">
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('order')">Close</button>
+        <div class="modal-title">Place Order</div>
+        <div class="modal-sub">Submit a request for office supplies</div>
+        <div class="field-wrap">
+          <label class="field-label">Category</label
+          ><select class="field-input" style="cursor: pointer">
+            <option>Laptops</option>
+            <option>Peripherals</option>
+            <option>Routers</option>
+          </select>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Product</label
+          ><select class="field-input" style="cursor: pointer">
+            <option>ThinkPad X1 Carbon</option>
+            <option>MacBook Pro 14"</option>
+            <option>Latitude 15"</option>
+          </select>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Quantity</label
+          ><input class="field-input" type="number" value="1" min="1" />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Reason / Notes</label
+          ><input
+            class="field-input"
+            placeholder="e.g. Replacement for damaged unit"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('order')">
+            Cancel</button
+          ><button class="btn btn-add" onclick="submitOrder()">
+            Submit Order
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="modal-cancel">
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('cancel')">
+          Close
+        </button>
+        <div class="modal-title">Cancel Order</div>
+        <div class="modal-sub">Are you sure you want to cancel this order?</div>
+        <div
+          style="
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            font-size: 13px;
+            margin-bottom: 8px;
+          "
+        >
+          <div
+            style="
+              color: var(--text2);
+              font-size: 10px;
+              margin-bottom: 6px;
+              font-weight: 700;
+            "
+          >
+            ORDER #ORD-2024
+          </div>
+          <div>MacBook Pro 14" — Qty: 1</div>
+          <div style="font-size: 12px; color: var(--text2); margin-top: 4px">
+            Requested by Sarah K. · Mar 5, 2025
+          </div>
+        </div>
+        <div class="field-wrap" style="margin-top: 14px">
+          <label class="field-label">Cancellation reason</label
+          ><input
+            class="field-input"
+            placeholder="Briefly explain the reason"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('cancel')">
+            Keep Order</button
+          ><button class="btn btn-danger" onclick="cancelOrder()">
+            Confirm Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="modal-restock">
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('restock')">
+          Close
+        </button>
+        <div class="modal-title">Restock Item</div>
+        <div class="modal-sub">Update inventory levels for a product</div>
+        <div class="field-wrap">
+          <label class="field-label">Product</label
+          ><select class="field-input" style="cursor: pointer">
+            <option>MX Master 3S — 0 in stock</option>
+            <option>Latitude 15" — 2 in stock</option>
+            <option>Q Pro Mechanical — 0 in stock</option>
+          </select>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Units to Add</label
+          ><input class="field-input" type="number" value="10" min="1" />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Supplier / PO Reference</label
+          ><input class="field-input" placeholder="e.g. PO-2025-034" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('restock')">
+            Cancel</button
+          ><button class="btn btn-add" onclick="doRestock()">
+            Confirm Restock
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="modal-add-product">
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('add-product')">
+          Close
+        </button>
+        <div class="modal-title">Add New Product</div>
+        <div class="modal-sub">Register a new item in the inventory</div>
+        <div class="field-wrap">
+          <label class="field-label">Category</label
+          ><select class="field-input" style="cursor: pointer">
+            <option>Laptops</option>
+            <option>Peripherals</option>
+            <option>Routers</option>
+          </select>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Product Name</label
+          ><input class="field-input" placeholder="e.g. ThinkPad E14 Gen 5" />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Brand</label
+          ><input class="field-input" placeholder="e.g. Lenovo" />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Initial Stock</label
+          ><input class="field-input" type="number" value="0" min="0" />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Low Stock Threshold</label
+          ><input class="field-input" type="number" value="5" min="1" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('add-product')">
+            Cancel</button
+          ><button class="btn btn-add" onclick="addProduct()">
+            Add Product
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="modal-add-user">
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('add-user')">
+          Close
+        </button>
+        <div class="modal-title">Add New User</div>
+        <div class="modal-sub">Create an account and assign a role</div>
+        <div class="field-wrap">
+          <label class="field-label">Full Name</label
+          ><input class="field-input" placeholder="e.g. Jane Smith" />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Email</label
+          ><input
+            class="field-input"
+            type="email"
+            placeholder="jane@company.com"
+          />
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Assign Role</label
+          ><select class="field-input" style="cursor: pointer">
+            <option>User</option>
+            <option>Admin</option>
+            <option>Super Admin</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('add-user')">
+            Cancel</button
+          ><button class="btn btn-add" onclick="addUser()">Create User</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="notif-area" id="notif-area"></div>
+
+    <script
+      data-cfasync="false"
+      src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
+    ></script>
+    <script>
+      /* ── THEME ── */
+      let isDark = true;
+      function toggleTheme() {
+        isDark = !isDark;
+        document.documentElement.setAttribute(
+          "data-theme",
+          isDark ? "dark" : "light",
+        );
+        const track = document.getElementById("pill-track");
+        const label = document.getElementById("pill-label");
+        const loginBtn = document.getElementById("login-theme-btn");
+        if (isDark) {
+          track.classList.remove("on");
+          label.textContent = "Light Mode";
+          loginBtn.textContent = "Light Mode";
+        } else {
+          track.classList.add("on");
+          label.textContent = "Dark Mode";
+          loginBtn.textContent = "Dark Mode";
+        }
+        drawBarChart();
+      }
+
+      /* ── AUTH ── */
+      let currentRole = "admin";
+      function selectRole(r) {
+        currentRole = r;
+        document
+          .querySelectorAll(".role-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.querySelector(`[data-role="${r}"]`).classList.add("active");
+      }
+      function doLogin() {
+        document.getElementById("screen-login").classList.remove("active");
+        document.getElementById("screen-app").classList.add("active");
+        applyRole();
+        goPage(currentRole === "user" ? "inventory" : "dashboard");
+      }
+      function doLogout() {
+        document.getElementById("screen-app").classList.remove("active");
+        document.getElementById("screen-login").classList.add("active");
+      }
+
+      const roleNames = {
+        user: "Suhas",
+        admin: "Sridevi",
+        superadmin: "Ahaan",
+      };
+      const roleLabels = {
+        user: "USER",
+        admin: "ADMIN",
+        superadmin: "SUPER ADMIN",
+      };
+      const roleColors = {
+        user: "#0ea5e9",
+        admin: "var(--accent2)",
+        superadmin: "#a21caf",
+      };
+
+      function applyRole() {
+        const r = currentRole;
+        document.getElementById("sidebar-name").textContent = roleNames[r];
+        document.getElementById("sidebar-role").textContent = roleLabels[r];
+        document.getElementById("sidebar-role").style.color = roleColors[r];
+        document.getElementById("sidebar-avatar").textContent = roleNames[r]
+          .split(" ")
+          .map((x) => x[0])
+          .join("");
+
+        const isAdmin = r === "admin" || r === "superadmin";
+        const isSA = r === "superadmin";
+        const isUser = r === "user";
+
+        /* Navigation */
+        document.getElementById("nav-dashboard").style.display = isUser
+          ? "none"
+          : "";
+        document.getElementById("admin-nav").style.display = isAdmin
+          ? ""
+          : "none";
+        document.getElementById("superadmin-nav").style.display = isSA
+          ? ""
+          : "none";
+
+        /* Dashboard elements */
+        document.getElementById("low-stock-alert").style.display = isAdmin
+          ? ""
+          : "none";
+        document.getElementById("admin-add-btn").style.display = isAdmin
+          ? ""
+          : "none";
+
+        /* Role-gated elements */
+        document
+          .querySelectorAll(".admin-only")
+          .forEach((el) => (el.style.display = isAdmin ? "" : "none"));
+        document
+          .querySelectorAll(".user-only")
+          .forEach((el) => (el.style.display = isUser ? "" : "none"));
+
+        /* Stock numbers hidden from users UNLESS it's a "low/out" badge (those stay) */
+        /* admin-only-num = the big stock number on product cards */
+        document
+          .querySelectorAll(".admin-only-num")
+          .forEach((el) => (el.style.display = isUser ? "none" : ""));
+        /* admin-only-badge = the "X units" overlay badge on product card images */
+        document
+          .querySelectorAll(".admin-only-badge")
+          .forEach((el) => (el.style.display = isUser ? "none" : ""));
+        /* admin-only-col = Stock / In Use table columns */
+        document
+          .querySelectorAll(".admin-only-col")
+          .forEach((el) => (el.style.display = isUser ? "none" : ""));
+      }
+
+      /* ── NAVIGATION ── */
+      function goPage(id) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        document.getElementById("page-" + id)?.classList.add("active");
+        document.querySelectorAll(".nav-item").forEach((n) => {
+          if (n.getAttribute("onclick")?.includes("'" + id + "'"))
+            n.classList.add("active");
+        });
+      }
+
+      /* ── FILTER CHIPS ── */
+      function filterChip(el) {
+        const parent = el.closest(".order-filter-row");
+        if (parent)
+          parent
+            .querySelectorAll(".filter-chip")
+            .forEach((c) => c.classList.remove("active"));
+        el.classList.add("active");
+      }
+
+      /* ── MODALS ── */
+      function openModal(id) {
+        document.getElementById("modal-" + id).classList.add("open");
+      }
+      function closeModal(id) {
+        document.getElementById("modal-" + id).classList.remove("open");
+      }
+      document.querySelectorAll(".modal-overlay").forEach((o) =>
+        o.addEventListener("click", (e) => {
+          if (e.target === o) o.classList.remove("open");
+        }),
+      );
+
+      /* ── ORDER ACTIONS ── */
+      function submitOrder() {
+        closeModal("order");
+        showNotif("Order submitted successfully", "success");
+      }
+      function cancelOrder() {
+        closeModal("cancel");
+        showNotif("Order cancelled", "info");
+      }
+      function approveOrder(btn) {
+        const row = btn.closest("tr");
+        const badge = row.querySelector(".stat-badge");
+        badge.className = "stat-badge badge-blue";
+        badge.textContent = "Approved";
+        btn.closest(".row-actions").innerHTML =
+          '<button class="btn btn-outline">View</button>';
+        showNotif(
+          "Order approved — stock will be updated on delivery",
+          "success",
+        );
+      }
+
+      /* ── RETURN PRODUCT (My Products page) ── */
+      let returnCounter = 200;
+      function returnProduct(btn) {
+        const card = btn.closest(".product-card");
+        const productName = card.dataset.product;
+        const imgSrc = card.dataset.img;
+
+        /* Animate card out */
+        card.style.transition = "opacity .35s, transform .35s";
+        card.style.opacity = "0";
+        card.style.transform = "scale(.92)";
+        setTimeout(() => {
+          card.remove();
+          /* Show empty state if no cards left */
+          const grid = document.getElementById("my-products-grid");
+          if (!grid.querySelector(".product-card")) {
+            document.getElementById("my-products-empty").style.display =
+              "block";
+          }
+        }, 370);
+
+        /* Add to Restock Manager table */
+        const restockBody = document.getElementById("restock-tbody");
+        if (restockBody) {
+          returnCounter++;
+          const today = new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          });
+          const tr = document.createElement("tr");
+          tr.className = "low-stock-row";
+          tr.innerHTML = `
+      <td><img class="prod-thumb" src="${imgSrc}" alt=""/></td>
+      <td>${productName}</td>
+      <td>Returned</td>
+      <td style="color:var(--green);font-weight:700">+1</td>
+      <td>—</td>
+      <td><span class="stock-pill stock-low"><span class="stock-dot"></span>Returned</span></td>
+      <td class="row-actions">
+        <button class="btn btn-add" onclick="openModal('restock')">Restock</button>
+        <button class="btn btn-danger" onclick="showNotif('Item removed','error')">Remove</button>
+      </td>`;
+          restockBody.prepend(tr);
+        }
+
+        showNotif(
+          `${productName} returned successfully — added to Restock Manager`,
+          "success",
+        );
+      }
+
+      /* ── OTHER ACTIONS ── */
+      function doRestock() {
+        closeModal("restock");
+        showNotif("Stock updated successfully", "success");
+      }
+      function addProduct() {
+        closeModal("add-product");
+        showNotif("Product added to inventory", "success");
+      }
+      function addUser() {
+        closeModal("add-user");
+        showNotif("User created successfully", "success");
+      }
+
+      /* ── NOTIFICATIONS ── */
+      function showNotif(msg, type = "info") {
+        const area = document.getElementById("notif-area");
+        const n = document.createElement("div");
+        n.className = "notif " + type;
+        const colorMap = {
+          success: "var(--green)",
+          error: "var(--red)",
+          info: "var(--accent)",
+        };
+        const labelMap = { success: "Done", error: "Error", info: "Info" };
+        n.innerHTML = `<span class="notif-icon" style="color:${colorMap[type] || "var(--accent)"}">[${labelMap[type] || "i"}]</span><span>${msg}</span>`;
+        area.appendChild(n);
+        setTimeout(() => n.remove(), 3500);
+      }
+
+      /* ── USERS SEARCH / FILTER ── */
+      let activeUserFilter = "all";
+      function setUserFilter(filter, el) {
+        activeUserFilter = filter;
+        document
+          .querySelectorAll(".users-filter-chips .filter-chip")
+          .forEach((c) => c.classList.remove("active"));
+        el.classList.add("active");
+        filterUsers();
+      }
+      function filterUsers() {
+        const query = (
+          document.getElementById("users-search")?.value || ""
+        ).toLowerCase();
+        const cards = document.querySelectorAll("#user-card-grid .user-card");
+        let visible = 0;
+        cards.forEach((card) => {
+          const name = (card.dataset.name || "").toLowerCase();
+          const email = (card.dataset.email || "").toLowerCase();
+          const role = card.dataset.role || "";
+          const matchSearch =
+            !query ||
+            name.includes(query) ||
+            email.includes(query) ||
+            role.includes(query);
+          const matchFilter =
+            activeUserFilter === "all" || role === activeUserFilter;
+          card.style.display = matchSearch && matchFilter ? "" : "none";
+          if (matchSearch && matchFilter) visible++;
+        });
+        const empty = document.getElementById("users-empty");
+        if (empty) empty.style.display = visible === 0 ? "block" : "none";
+      }
+
+      /* ── BAR CHART ── */
+      const categories = [
+        {
+          label: "Laptops",
+          demand: 87,
+          usage: 74,
+          color: "#4f8ef7",
+          brands: [
+            { name: "Lenovo", usage: 38, demand: 42, color: "#4f8ef7" },
+            { name: "Apple", usage: 42, demand: 48, color: "#7c5cfc" },
+            { name: "Dell", usage: 19, demand: 25, color: "#22c55e" },
+          ],
+        },
+        {
+          label: "Peripherals",
+          demand: 62,
+          usage: 48,
+          color: "#7c5cfc",
+          brands: [
+            { name: "Logitech", usage: 0, demand: 18, color: "#ef4444" },
+            { name: "Microsoft", usage: 38, demand: 34, color: "#4f8ef7" },
+            { name: "Keychron", usage: 0, demand: 22, color: "#f59e0b" },
+          ],
+        },
+        {
+          label: "Routers",
+          demand: 74,
+          usage: 61,
+          color: "#22c55e",
+          brands: [
+            { name: "TP-Link", usage: 28, demand: 32, color: "#22c55e" },
+            { name: "Netgear", usage: 16, demand: 24, color: "#f59e0b" },
+            { name: "Ubiquiti", usage: 26, demand: 30, color: "#4f8ef7" },
+          ],
+        },
+      ];
+      function drawBarChart() {
+        const svg = document.getElementById("bar-svg");
+        if (!svg) return;
+        const labelsEl = document.getElementById("bar-labels");
+        const W = 500,
+          H = 178,
+          pad = 36,
+          barW = 54,
+          gap = 78,
+          startX = 52,
+          maxVal = 100;
+        svg.innerHTML = "";
+        [25, 50, 75, 100].forEach((v) => {
+          const y = H - pad - (v / maxVal) * (H - pad - 10);
+          const line = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "line",
+          );
+          line.setAttribute("x1", "0");
+          line.setAttribute("x2", W);
+          line.setAttribute("y1", y);
+          line.setAttribute("y2", y);
+          line.setAttribute("stroke", isDark ? "#1e2330" : "#eaecf4");
+          line.setAttribute("stroke-width", "1");
+          svg.appendChild(line);
+          const txt = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text",
+          );
+          txt.setAttribute("x", "4");
+          txt.setAttribute("y", y + 4);
+          txt.setAttribute("fill", isDark ? "#4e5a78" : "#9ca3af");
+          txt.setAttribute("font-size", "9");
+          txt.setAttribute("font-family", "Times New Roman");
+          txt.textContent = v;
+          svg.appendChild(txt);
+        });
+        categories.forEach((cat, i) => {
+          const x = startX + i * (barW + gap);
+          const dH = (cat.demand / maxVal) * (H - pad - 10);
+          const dr = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "rect",
+          );
+          dr.setAttribute("x", x);
+          dr.setAttribute("width", barW);
+          dr.setAttribute("y", H - pad - dH);
+          dr.setAttribute("height", dH);
+          dr.setAttribute("fill", cat.color);
+          dr.setAttribute("opacity", "0.2");
+          dr.setAttribute("rx", "3");
+          dr.style.cursor = "pointer";
+          dr.addEventListener("click", () => showDrill(i));
+          svg.appendChild(dr);
+          const uH = (cat.usage / maxVal) * (H - pad - 10);
+          const ur = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "rect",
+          );
+          ur.setAttribute("x", x + 10);
+          ur.setAttribute("width", barW - 20);
+          ur.setAttribute("y", H - pad - uH);
+          ur.setAttribute("height", uH);
+          ur.setAttribute("fill", cat.color);
+          ur.setAttribute("rx", "3");
+          ur.setAttribute("class", "clickable-bar");
+          ur.addEventListener("click", () => showDrill(i));
+          svg.appendChild(ur);
+          const vt = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text",
+          );
+          vt.setAttribute("x", x + barW / 2);
+          vt.setAttribute("y", H - pad - uH - 5);
+          vt.setAttribute("text-anchor", "middle");
+          vt.setAttribute("fill", cat.color);
+          vt.setAttribute("font-size", "10");
+          vt.setAttribute("font-family", "Times New Roman");
+          vt.textContent = cat.usage;
+          svg.appendChild(vt);
+        });
+        labelsEl.innerHTML = categories
+          .map((c) => `<div class="bar-label-item">${c.label}</div>`)
+          .join("");
+      }
+      function showDrill(i) {
+        const cat = categories[i];
+        document.getElementById("drill-title").textContent =
+          `${cat.label} — Brand Usage & Demand`;
+        const maxVal = Math.max(...cat.brands.map((b) => b.demand));
+        document.getElementById("drill-content").innerHTML = cat.brands
+          .map(
+            (b) => `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:700">${b.name}</span>
+        <span style="font-size:        <span style="font-size:10px;color:var(--text3)">In Use: ${b.usage} · Demand: ${b.demand}</span>
+      </div>
+      <div class="brand-bar-row"><div class="brand-bar-label">Usage</div><div class="brand-bar-track"><div class="brand-bar-fill" style="width:${b.usage ? (b.usage / maxVal) * 100 : 0}%;background:${b.color}"></div></div><div class="brand-bar-val">${b.usage}</div></div>
+      <div class="brand-bar-row"><div class="brand-bar-label">Demand</div><div class="brand-bar-track"><div class="brand-bar-fill" style="width:${(b.demand / maxVal) * 100}%;background:${b.color};opacity:.4"></div></div><div class="brand-bar-val">${b.demand}</div></div>
+    </div>
+  `,
+          )
+          .join(
+            '<div style="height:1px;background:var(--border);margin:4px 0 12px"></div>',
+          );
+        document.getElementById("drill-panel").classList.add("visible");
+        document
+          .getElementById("drill-panel")
+          .scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      function closeDrill() {
+        document.getElementById("drill-panel").classList.remove("visible");
+      }
+      drawBarChart();
+      window.addEventListener("resize", drawBarChart);
+    </script>
+  </body>
+</html>
